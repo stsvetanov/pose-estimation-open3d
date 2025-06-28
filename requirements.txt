@@ -1,0 +1,11 @@
+# torch
+open3d
+numpy
+opencv-python
+pyrealsense2
+matplotlib
+trimesh
+pyrender
+scipy
+# pyglet<2
+# pillow
