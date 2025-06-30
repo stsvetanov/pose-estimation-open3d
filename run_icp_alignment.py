@@ -86,7 +86,7 @@ def main():
     parser.add_argument('--voxel', type=float, default=0.002, help='Voxel size for downsampling')
     parser.add_argument('--init_x', type=float, default=0.0, help='Initial X translation of model')
     parser.add_argument('--init_y', type=float, default=0.0, help='Initial Y translation of model')
-    parser.add_argument('--init_z', type=float, default=-0.3, help='Initial Z translation of model')
+    parser.add_argument('--init_z', type=float, default=0.0, help='Initial Z translation of model')
     parser.add_argument('--visualize', action='store_true', help='Enable intermediate visualizations')
     args = parser.parse_args()
 
