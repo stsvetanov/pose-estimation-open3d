@@ -31,8 +31,10 @@ def save_pose_matrix(matrix, out_dir="poses"):
 # === Setup RealSense pipeline ===
 pipeline = rs.pipeline()
 config = rs.config()
-config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 15)
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 15)
+# config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 15)
+config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 15)
+# config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 15)
+config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 15)
 profile = pipeline.start(config)
 align = rs.align(rs.stream.color)
 
@@ -85,7 +87,7 @@ while True:
 
     output_dir = "icp_data"
     os.makedirs(output_dir, exist_ok=True)
-    scene_ply_path = os.path.join(output_dir, "realsense_scene.ply")
+    scene_ply_path = os.path.join(output_dir, "realsense_scene_2.ply")
     o3d.io.write_point_cloud(scene_ply_path, scene_pcd)
     print(f"Point cloud saved to: {scene_ply_path}")
 

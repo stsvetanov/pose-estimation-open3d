@@ -7,7 +7,7 @@ import os
 # === CONFIGURATION ===
 output_dir = "icp_data"
 os.makedirs(output_dir, exist_ok=True)
-scene_ply_path = os.path.join(output_dir, "realsense_scene.ply")
+scene_ply_path = os.path.join(output_dir, "realsense_scene_tmp.ply")
 
 # === 1. Setup RealSense Pipeline ===
 pipeline = rs.pipeline()

@@ -1,5 +1,6 @@
-import copy
+# https://www.open3d.org/docs/latest/tutorial/pipelines/icp_registration.html
 
+import copy
 import open3d as o3d
 import numpy as np
 
@@ -21,7 +22,7 @@ demo_icp_pcds = o3d.data.DemoICPPointClouds()
 # source = o3d.io.read_point_cloud(demo_icp_pcds.paths[0])
 source = o3d.io.read_point_cloud("icp_data/realsense_scene.ply")
 # target = o3d.io.read_point_cloud(demo_icp_pcds.paths[1])
-target = o3d.io.read_point_cloud("icp_data/sample_object_model.ply")
+target = o3d.io.read_point_cloud("icp_data/Plate4_pcd.ply")
 threshold = 0.02
 trans_init = np.asarray([[0.862, 0.011, -0.507, 0.5],
                              [-0.139, 0.967, -0.215, 0.7],
