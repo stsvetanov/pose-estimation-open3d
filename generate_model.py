@@ -9,7 +9,7 @@ def generate_simple_box(output_dir, filename="sample_object_model.ply"):
     box.compute_vertex_normals()
     box.paint_uniform_color([0.2, 0.6, 0.8])
 
-    model_pcd = box.sample_points_uniformly(number_of_points=1500)
+    model_pcd = box.sample_points_uniformly(number_of_points=5000)
 
     output_path = os.path.join(output_dir, filename)
     o3d.io.write_point_cloud(output_path, model_pcd)
@@ -25,7 +25,7 @@ def generate_pcd_from_stl(input_file, output_dir):
 
     mesh.compute_vertex_normals()
     mesh.paint_uniform_color([0.2, 0.6, 0.8])
-    pcd = mesh.sample_points_uniformly(number_of_points=1500)
+    pcd = mesh.sample_points_uniformly(number_of_points=5000)
 
     base_name = os.path.splitext(os.path.basename(input_file))[0]
     output_path = os.path.join(output_dir, base_name + "_pcd.ply")

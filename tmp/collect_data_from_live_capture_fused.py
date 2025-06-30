@@ -4,7 +4,7 @@ import pyrealsense2 as rs
 import os
 
 # === CONFIGURATION ===
-output_dir = "icp_data"
+output_dir = "../icp_data"
 os.makedirs(output_dir, exist_ok=True)
 fused_pcd_path = os.path.join(output_dir, "realsense_fused_scene.ply")
 num_frames = 30  # Number of frames to accumulate
