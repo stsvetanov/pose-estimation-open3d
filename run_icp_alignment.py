@@ -4,6 +4,7 @@ import numpy as np
 # === FILE PATHS ===
 scene_path = "icp_data/realsense_scene_2.ply"
 model_path = "icp_data/sample_object_model.ply"
+# model_path = "icp_data/Plate4_model.ply"
 
 # === 1. Load Scene and Model ===
 scene = o3d.io.read_point_cloud(scene_path)
