@@ -1,8 +1,13 @@
-import copy
-
 import open3d as o3d
 import numpy as np
 import argparse
+import copy
+
+def draw_registration_result(scene, model, transformation=None, window_name="Registration"):
+    if transformation is not None:
+        model = copy.deepcopy(model)
+        model.transform(transformation)
+    o3d.visualization.draw_geometries([scene, model], window_name=window_name)
 
 def compute_fpfh(pcd, voxel_size):
     radius_normal = voxel_size * 2
@@ -23,7 +28,7 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
 
     if visualize:
         print("[INFO] Visualizing initial scene and model...")
-        o3d.visualization.draw_geometries([scene, model], window_name="Initial Scene and Model")
+        draw_registration_result(scene, model, window_name="Initial Scene and Model")
 
     if init_rotation:
         print(f"[INFO] Applying initial rotation (degrees): {init_rotation}")
@@ -37,7 +42,7 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
 
     if visualize:
         print("[INFO] Visualizing after model transformation...")
-        o3d.visualization.draw_geometries([scene, model], window_name="After Initial Transform")
+        draw_registration_result(scene, model, window_name="After Initial Transform")
 
     print("[INFO] Downsampling...")
     model_down = model.voxel_down_sample(voxel_size)
@@ -46,7 +51,7 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
     if visualize:
         model_down.paint_uniform_color([1, 0, 0])  # red
         scene_down.paint_uniform_color([0, 0, 1])  # blue
-        o3d.visualization.draw_geometries([scene_down, model_down], window_name="Downsampled Clouds")
+        draw_registration_result(scene_down, model_down, window_name="Downsampled Clouds")
 
     if skip_ransac:
         print("[INFO] Skipping RANSAC. Using identity matrix for initial alignment.")
@@ -75,17 +80,11 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
 
         if visualize:
             print("[INFO] Visualizing after RANSAC...")
-            model_ransac = copy.deepcopy(model)
-            model_ransac.transform(init_transformation)
-            o3d.visualization.draw_geometries([scene, model_ransac], window_name="After RANSAC")
+            draw_registration_result(scene, model, init_transformation, window_name="After RANSAC")
 
     print(f"[INFO] Refining with ICP (threshold = {icp_threshold:.4f})...")
-    scene.estimate_normals(
-        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=icp_threshold * 2, max_nn=30)
-    )
-    model.estimate_normals(
-        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=icp_threshold * 2, max_nn=30)
-    )
+    scene.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=icp_threshold * 2, max_nn=30))
+    model.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=icp_threshold * 2, max_nn=30))
 
     result_icp = o3d.pipelines.registration.registration_icp(
         model, scene, max_correspondence_distance=icp_threshold,
@@ -97,7 +96,8 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
     model.transform(result_icp.transformation)
 
     print("[INFO] Visualizing final alignment...")
-    o3d.visualization.draw_geometries([scene, model], window_name="Final Alignment: Model + Scene")
+    draw_registration_result(scene, model, window_name="Final Alignment: Model + Scene")
+
 
 def main():
     parser = argparse.ArgumentParser(description="ICP Alignment using Open3D with optional RANSAC")
