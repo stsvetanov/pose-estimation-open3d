@@ -40,7 +40,8 @@ align = rs.align(rs.stream.color)
 
 # === Camera Intrinsics ===
 intrinsics = o3d.camera.PinholeCameraIntrinsic(
-    width=640, height=480, fx=617, fy=617, cx=320, cy=240
+    # width=640, height=480, fx=617, fy=617, cx=320, cy=240
+    width=1280, height=720, fx=617, fy=617, cx=320, cy=240
 )
 
 # === Load and sample mesh ===
@@ -87,7 +88,7 @@ while True:
 
     output_dir = "icp_data"
     os.makedirs(output_dir, exist_ok=True)
-    scene_ply_path = os.path.join(output_dir, "realsense_scene_2.ply")
+    scene_ply_path = os.path.join(output_dir, "realsense_scene_3.ply")
     o3d.io.write_point_cloud(scene_ply_path, scene_pcd)
     print(f"Point cloud saved to: {scene_ply_path}")
 

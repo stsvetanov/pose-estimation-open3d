@@ -57,7 +57,7 @@ try_remove_plane = False
 manual_select = True
 downsample = False
 
-model_path = "icp_data/sample_object_model.ply"
+model_path = "icp_data/sample_model.ply"
 
 scene_path = "icp_data/realsense_scene_2.ply"
 

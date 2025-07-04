@@ -18,11 +18,32 @@ def draw_registration_result(source, target, transformation):
     #                                   up=[-0.3402, -0.9189, -0.1996])
     o3d.visualization.draw_geometries([source_temp, target_temp])
 
-demo_icp_pcds = o3d.data.DemoICPPointClouds()
+
+def compute_fpfh(pcd, voxel_size):
+    radius_normal = voxel_size * 2
+    radius_feature = voxel_size * 5
+    pcd.estimate_normals(
+        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30)
+    )
+    return o3d.pipelines.registration.compute_fpfh_feature(
+        pcd,
+        o3d.geometry.KDTreeSearchParamHybrid(radius=radius_feature, max_nn=100)
+    )
+
+
+# demo_icp_pcds = o3d.data.DemoICPPointClouds()
 # source = o3d.io.read_point_cloud(demo_icp_pcds.paths[0])
-source = o3d.io.read_point_cloud("icp_data/realsense_scene.ply")
+source = o3d.io.read_point_cloud("icp_data/sample_model.ply")
 # target = o3d.io.read_point_cloud(demo_icp_pcds.paths[1])
-target = o3d.io.read_point_cloud("icp_data/Plate4_pcd.ply")
+target = o3d.io.read_point_cloud("icp_data/sample_model.ply")
+target.translate([0.02, 0.02, 0])
+target.paint_uniform_color([1, 0, 0])
+
+voxel_size = 0.005
+print("[INFO] Downsampling...")
+source = source.voxel_down_sample(voxel_size)
+target = target.voxel_down_sample(voxel_size)
+
 threshold = 0.02
 trans_init = np.asarray([[0.862, 0.011, -0.507, 0.5],
                              [-0.139, 0.967, -0.215, 0.7],
@@ -33,6 +54,24 @@ print("Initial alignment")
 evaluation = o3d.pipelines.registration.evaluate_registration(
         source, target, threshold, trans_init)
 print(evaluation)
+
+print("[INFO] Estimating normals and computing FPFH...")
+
+source_fpfh = compute_fpfh(source, voxel_size)
+target_fpfh = compute_fpfh(target, voxel_size)
+
+distance_threshold = voxel_size * 1.5
+print("[INFO] Running RANSAC...")
+result_ransac = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+    target, source, target_fpfh, source_fpfh, True,
+    distance_threshold,
+    o3d.pipelines.registration.TransformationEstimationPointToPoint(False), 4,
+    [
+        o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
+        o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
+    ],
+    o3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 1000)
+)
 
 print("Apply point-to-point ICP")
 reg_p2p = o3d.pipelines.registration.registration_icp(

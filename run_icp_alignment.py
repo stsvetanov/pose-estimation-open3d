@@ -32,9 +32,12 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, visualiz
         print("[INFO] Visualizing after model translation...")
         o3d.visualization.draw_geometries([scene, model], window_name="After Model Translation")
 
+    # exit()
+    downsapling_size = 0.002
+
     print("[INFO] Downsampling...")
-    model_down = model.voxel_down_sample(voxel_size)
-    scene_down = scene.voxel_down_sample(voxel_size)
+    model_down = model.voxel_down_sample(downsapling_size)
+    scene_down = scene.voxel_down_sample(downsapling_size)
 
     if visualize:
         print("[INFO] Visualizing downsampled clouds...")
@@ -65,8 +68,10 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, visualiz
         o3d.visualization.draw_geometries([scene, model], window_name="After RANSAC: Model + Scene")
 
     print("[INFO] Refining alignment with ICP...")
+    icp_size = 0.003
+
     scene.estimate_normals(
-        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size * 2, max_nn=30)
+        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=icp_size * 2, max_nn=30)
     )
     result_icp = o3d.pipelines.registration.registration_icp(
         model, scene, distance_threshold, result_ransac.transformation,
@@ -83,7 +88,7 @@ def main():
     parser = argparse.ArgumentParser(description="ICP Alignment using Open3D")
     parser.add_argument('--model', type=str, default="icp_data/sample_object_model.ply", help='Path to model PLY file')
     parser.add_argument('--scene', type=str, default="icp_data/realsense_scene_2.ply", help='Path to scene PLY file')
-    parser.add_argument('--voxel', type=float, default=0.002, help='Voxel size for downsampling')
+    parser.add_argument('--voxel', type=float, default=0.02, help='Voxel size for downsampling')
     parser.add_argument('--init_x', type=float, default=0.0, help='Initial X translation of model')
     parser.add_argument('--init_y', type=float, default=0.0, help='Initial Y translation of model')
     parser.add_argument('--init_z', type=float, default=0.0, help='Initial Z translation of model')
