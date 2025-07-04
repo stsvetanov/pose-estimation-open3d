@@ -57,13 +57,11 @@ try_remove_plane = False
 manual_select = True
 downsample = False
 
-# model_path = "icp_data/sample_object_model.ply"
+model_path = "icp_data/sample_object_model.ply"
 
-# scene_path = "icp_data/realsense_scene_2.ply"
+scene_path = "icp_data/realsense_scene_2.ply"
 
-model_path = r"C:\Work\2025_workstuff\Research\poseEstimate_svetanov\pose-estimation-open3d\icp_data\Plate2_pcd.ply"
 
-scene_path = r"C:\Work\2025_workstuff\Research\poseEstimate_svetanov\pose-estimation-open3d\icp_data\realsense_scene_2.ply"
 
 print(f"[INFO] Loading model: {model_path}")
 model = o3d.io.read_point_cloud(model_path)
