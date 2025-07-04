@@ -3,8 +3,17 @@ import argparse
 import os
 import numpy as np
 
+def sample_surface_points(mesh, num_points, method="uniform"):
+    if method == "uniform":
+        return mesh.sample_points_uniformly(number_of_points=num_points)
+    elif method == "poisson":
+        return mesh.sample_points_poisson_disk(number_of_points=num_points)
+    else:
+        raise ValueError(f"Unsupported sampling method: {method}")
+
 def convert_stl_to_ply(input_stl, output_ply, mode, scale_to_meters=True,
-                       align_to_scene=None, flatten=False, num_points=2000, z_noise=0.001):
+                       align_to_scene=None, flatten=False,
+                       num_points=2000, z_noise=0.001, sampling_method="uniform"):
     print(f"[INFO] Loading STL mesh from: {input_stl}")
     mesh = o3d.io.read_triangle_mesh(input_stl)
     if mesh.is_empty():
@@ -22,12 +31,11 @@ def convert_stl_to_ply(input_stl, output_ply, mode, scale_to_meters=True,
         mesh.translate(scene.get_center() - mesh.get_center())
 
     if mode == "pcd":
-        print(f"[INFO] Sampling full mesh surface with {num_points} points...")
-        mesh = mesh.sample_points_uniformly(number_of_points=num_points)
+        print(f"[INFO] Sampling full mesh surface using {sampling_method} sampling...")
+        mesh = sample_surface_points(mesh, num_points, sampling_method)
 
     elif mode == "topdown":
-        print("[INFO] Extracting top-facing triangles and sampling from them...")
-
+        print("[INFO] Extracting top-facing triangles...")
         mesh.compute_triangle_normals()
         triangles = np.asarray(mesh.triangles)
         vertices = np.asarray(mesh.vertices)
@@ -44,8 +52,8 @@ def convert_stl_to_ply(input_stl, output_ply, mode, scale_to_meters=True,
         top_mesh.triangles = o3d.utility.Vector3iVector(top_triangles)
         top_mesh.compute_vertex_normals()
 
-        print(f"[INFO] Sampling {num_points} points from top-facing surface...")
-        pcd = top_mesh.sample_points_uniformly(number_of_points=num_points)
+        print(f"[INFO] Sampling {num_points} points using {sampling_method} sampling...")
+        pcd = sample_surface_points(top_mesh, num_points, sampling_method)
 
         if flatten:
             print(f"[INFO] Flattening Z coordinates with noise σ={z_noise} m...")
@@ -68,7 +76,8 @@ if __name__ == "__main__":
     parser.add_argument("--mode", choices=["pcd", "mesh", "topdown"], default="pcd", help="Conversion mode")
     parser.add_argument("--flat", action="store_true", help="Flatten points to XY plane with Z noise")
     parser.add_argument("--num_points", type=int, default=2000, help="Number of points to sample from surface")
-    parser.add_argument("--z_noise", type=float, default=0.0003, help="Stddev of noise added to Z when flattening")
+    parser.add_argument("--z_noise", type=float, default=0.001, help="Stddev of noise added to Z when flattening")
+    parser.add_argument("--sampling", choices=["uniform", "poisson"], default="uniform", help="Sampling method")
 
     args = parser.parse_args()
 
@@ -80,5 +89,6 @@ if __name__ == "__main__":
         mode=args.mode,
         flatten=args.flat,
         num_points=args.num_points,
-        z_noise=args.z_noise
+        z_noise=args.z_noise,
+        sampling_method=args.sampling
     )

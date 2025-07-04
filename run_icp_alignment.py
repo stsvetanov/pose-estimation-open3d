@@ -1,7 +1,8 @@
+import copy
+
 import open3d as o3d
 import numpy as np
 import argparse
-import os
 
 def compute_fpfh(pcd, voxel_size):
     radius_normal = voxel_size * 2
@@ -14,7 +15,7 @@ def compute_fpfh(pcd, voxel_size):
         o3d.geometry.KDTreeSearchParamHybrid(radius=radius_feature, max_nn=100)
     )
 
-def run_alignment(model_path, scene_path, voxel_size, init_translation, visualize):
+def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rotation, visualize, skip_ransac, icp_threshold):
     print(f"[INFO] Loading model: {model_path}")
     model = o3d.io.read_point_cloud(model_path)
     print(f"[INFO] Loading scene: {scene_path}")
@@ -24,58 +25,72 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, visualiz
         print("[INFO] Visualizing initial scene and model...")
         o3d.visualization.draw_geometries([scene, model], window_name="Initial Scene and Model")
 
+    if init_rotation:
+        print(f"[INFO] Applying initial rotation (degrees): {init_rotation}")
+        radians = np.radians(init_rotation)
+        R = o3d.geometry.get_rotation_matrix_from_xyz(radians)
+        model.rotate(R, center=model.get_center())
+
     if init_translation:
         print(f"[INFO] Applying initial translation: {init_translation}")
         model.translate(init_translation)
 
     if visualize:
-        print("[INFO] Visualizing after model translation...")
-        o3d.visualization.draw_geometries([scene, model], window_name="After Model Translation")
-
-    # exit()
-    downsapling_size = 0.002
+        print("[INFO] Visualizing after model transformation...")
+        o3d.visualization.draw_geometries([scene, model], window_name="After Initial Transform")
 
     print("[INFO] Downsampling...")
-    model_down = model.voxel_down_sample(downsapling_size)
-    scene_down = scene.voxel_down_sample(downsapling_size)
+    model_down = model.voxel_down_sample(voxel_size)
+    scene_down = scene.voxel_down_sample(voxel_size)
 
     if visualize:
-        print("[INFO] Visualizing downsampled clouds...")
-        o3d.visualization.draw_geometries([scene_down, model_down], window_name="After Downsampling")
+        model_down.paint_uniform_color([1, 0, 0])  # red
+        scene_down.paint_uniform_color([0, 0, 1])  # blue
+        o3d.visualization.draw_geometries([scene_down, model_down], window_name="Downsampled Clouds")
 
-    print("[INFO] Estimating normals and computing FPFH...")
-    model_fpfh = compute_fpfh(model_down, voxel_size)
-    scene_fpfh = compute_fpfh(scene_down, voxel_size)
+    if skip_ransac:
+        print("[INFO] Skipping RANSAC. Using identity matrix for initial alignment.")
+        init_transformation = np.identity(4)
+    else:
+        print("[INFO] Estimating FPFH features...")
+        model_fpfh = compute_fpfh(model_down, voxel_size)
+        scene_fpfh = compute_fpfh(scene_down, voxel_size)
 
-    distance_threshold = voxel_size * 1.5
-    print("[INFO] Running RANSAC...")
-    result_ransac = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
-        model_down, scene_down, model_fpfh, scene_fpfh, True,
-        distance_threshold,
-        o3d.pipelines.registration.TransformationEstimationPointToPoint(False), 4,
-        [
-            o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
-            o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
-        ],
-        o3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 1000)
-    )
+        distance_threshold = voxel_size * 3.0
+        print(f"[INFO] Running RANSAC (threshold = {distance_threshold:.4f})...")
+        result_ransac = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+            model_down, scene_down, model_fpfh, scene_fpfh, mutual_filter=True,
+            max_correspondence_distance=distance_threshold,
+            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(False),
+            ransac_n=4,
+            checkers=[
+                o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
+                o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
+            ],
+            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(5000000, 2000)
+        )
 
-    print("RANSAC transformation:\n", result_ransac.transformation)
-    # model.transform(result_ransac.transformation)
+        print("RANSAC transformation:\n", result_ransac.transformation)
+        init_transformation = result_ransac.transformation
 
-    if visualize:
-        print("[INFO] Visualizing after RANSAC...")
-        o3d.visualization.draw_geometries([scene, model], window_name="After RANSAC: Model + Scene")
+        if visualize:
+            print("[INFO] Visualizing after RANSAC...")
+            model_ransac = copy.deepcopy(model)
+            model_ransac.transform(init_transformation)
+            o3d.visualization.draw_geometries([scene, model_ransac], window_name="After RANSAC")
 
-    print("[INFO] Refining alignment with ICP...")
-    icp_size = 0.003
-
+    print(f"[INFO] Refining with ICP (threshold = {icp_threshold:.4f})...")
     scene.estimate_normals(
-        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=icp_size * 2, max_nn=30)
+        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=icp_threshold * 2, max_nn=30)
     )
+    model.estimate_normals(
+        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=icp_threshold * 2, max_nn=30)
+    )
+
     result_icp = o3d.pipelines.registration.registration_icp(
-        model, scene, distance_threshold, result_ransac.transformation,
-        o3d.pipelines.registration.TransformationEstimationPointToPlane()
+        model, scene, max_correspondence_distance=icp_threshold,
+        init=init_transformation,
+        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane()
     )
 
     print("ICP transformation:\n", result_icp.transformation)
@@ -85,18 +100,37 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, visualiz
     o3d.visualization.draw_geometries([scene, model], window_name="Final Alignment: Model + Scene")
 
 def main():
-    parser = argparse.ArgumentParser(description="ICP Alignment using Open3D")
-    parser.add_argument('--model', type=str, default="icp_data/sample_object_model.ply", help='Path to model PLY file')
-    parser.add_argument('--scene', type=str, default="icp_data/realsense_scene_2.ply", help='Path to scene PLY file')
-    parser.add_argument('--voxel', type=float, default=0.02, help='Voxel size for downsampling')
+    parser = argparse.ArgumentParser(description="ICP Alignment using Open3D with optional RANSAC")
+    parser.add_argument('--model', type=str, required=True, help='Path to model PLY file')
+    parser.add_argument('--scene', type=str, required=True, help='Path to scene PLY file')
+    parser.add_argument('--voxel', type=float, default=0.01, help='Voxel size for downsampling and features')
+
     parser.add_argument('--init_x', type=float, default=0.0, help='Initial X translation of model')
     parser.add_argument('--init_y', type=float, default=0.0, help='Initial Y translation of model')
     parser.add_argument('--init_z', type=float, default=0.0, help='Initial Z translation of model')
+
+    parser.add_argument('--init_rx', type=float, default=0.0, help='Initial rotation around X axis (degrees)')
+    parser.add_argument('--init_ry', type=float, default=0.0, help='Initial rotation around Y axis (degrees)')
+    parser.add_argument('--init_rz', type=float, default=0.0, help='Initial rotation around Z axis (degrees)')
+
+    parser.add_argument('--icp_threshold', type=float, default=0.003, help='ICP max correspondence distance')
+    parser.add_argument('--skip_ransac', action='store_true', help='Skip RANSAC and go straight to ICP')
     parser.add_argument('--visualize', action='store_true', help='Enable intermediate visualizations')
     args = parser.parse_args()
 
     init_translation = [args.init_x, args.init_y, args.init_z]
-    run_alignment(args.model, args.scene, args.voxel, init_translation, args.visualize)
+    init_rotation = [args.init_rx, args.init_ry, args.init_rz]
+
+    run_alignment(
+        model_path=args.model,
+        scene_path=args.scene,
+        voxel_size=args.voxel,
+        init_translation=init_translation,
+        init_rotation=init_rotation,
+        visualize=args.visualize,
+        skip_ransac=args.skip_ransac,
+        icp_threshold=args.icp_threshold
+    )
 
 if __name__ == "__main__":
     main()
