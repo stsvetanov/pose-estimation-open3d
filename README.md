@@ -1,60 +1,44 @@
 # Pose estimation using Open3D
-This project demonstrate pose estimation in 3D space using data from depth camera.
-
-## Project Struction
-This is the breakdown of a project.
-```
-pose-estimation-open3d
-│   README.md
-│  .gitignore
-│   requirements.txt
-│   ...
-│
-│
-└───data
-│   │   ...
-│   │
-└───icp_data
-│   │   ...
-│   │
-└───poses
-    │   ...
-
-```
+This project demonstrate pose estimation in 3D space using Open3D and data from depth camera.
 
 ## Deployment
-Let's walk through setting up the development environment and deployment
 
-1. Install Python, pip, and virtualenv
+Install Python, pip, and virtualenv
 ```
 sudo apt-get install python3
 sudo apt install python3-pip
 sudo apt install python3-virtualenv
 ```
 
-2. Clone this repo and CD into the projects directory
+Clone this repo
 ```
 git clone git@github.com:stsvetanov/pose-estimation-open3d.git
 cd pose-estimation-open3d
 ```
 
-3. Create and activate a virtualenv
+Create and activate a virtualenv
 ```
 virtualenv venv
 source venv/bin/activate
 ```
 
-4. Install packages
+Install the required packages
 ```
 pip install -r requirements.txt
 ```
 
-5. Create a new dataset
+Run pose estimation with global (RANSAC) and local (ICP) registration using systematic data
 ```
-python3 collect_data_from_live_capture.py
+python run_icp_alignment.py --model .\icp_data\Plate4_topdown.ply   --visualize --scene icp_data/Plate4_topdown.ply  --init_rz 10 --init_x 0.17 --init_y 0.19  --init_z 0.005
 ```
 
-6. Run pose estimation
+Local registration on scene taking from Realsense 435 depth camera
 ```
-python3 run_icp_alignment.py
+python run_icp_alignment.py --model .\icp_data\Plate2_topdown.ply   --visualize --scene icp_data/realsense_scene_2.ply --init_rz 180 --init_z 0.001 --voxel 0.0005
+ --skip_ransac --init_x 0.12
+```
+
+To convert STL file to PLY
+```
+ python convert_stl_to_ply.py --input \data\3D-models\Plate4.stl --output \icp_data\Plate4_topdown.ply --mode topdown --scene .\icp_data\realsense_scene_2.ply --z_noise 0.00002 --num_points 10000
 ```

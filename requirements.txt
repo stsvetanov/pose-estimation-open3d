@@ -1,11 +1,4 @@
-# torch
 open3d
+pyrealsense2
 numpy
 opencv-python
-pyrealsense2
-matplotlib
-trimesh
-pyrender
-scipy
-# pyglet<2
-# pillow
