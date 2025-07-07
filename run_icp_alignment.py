@@ -61,7 +61,7 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
         model_fpfh = compute_fpfh(model_down, voxel_size)
         scene_fpfh = compute_fpfh(scene_down, voxel_size)
 
-        distance_threshold = voxel_size * 3.0
+        distance_threshold = voxel_size * 5.0
         print(f"[INFO] Running RANSAC (threshold = {distance_threshold:.4f})...")
         result_ransac = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
             model_down, scene_down, model_fpfh, scene_fpfh, mutual_filter=True,
@@ -72,7 +72,7 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
                 o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
                 o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
             ],
-            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(800000, 1500)
+            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(2000000, 1000)
         )
 
         print("RANSAC transformation:\n", result_ransac.transformation)
@@ -103,7 +103,7 @@ def main():
     parser = argparse.ArgumentParser(description="ICP Alignment using Open3D with optional RANSAC")
     parser.add_argument('--model', type=str, required=True, help='Path to model PLY file')
     parser.add_argument('--scene', type=str, required=True, help='Path to scene PLY file')
-    parser.add_argument('--voxel', type=float, default=0.01, help='Voxel size for downsampling and features')
+    parser.add_argument('--voxel', type=float, default=0.005, help='Voxel size for downsampling and features')
 
     parser.add_argument('--init_x', type=float, default=0.0, help='Initial X translation of model')
     parser.add_argument('--init_y', type=float, default=0.0, help='Initial Y translation of model')
@@ -113,7 +113,7 @@ def main():
     parser.add_argument('--init_ry', type=float, default=0.0, help='Initial rotation around Y axis (degrees)')
     parser.add_argument('--init_rz', type=float, default=0.0, help='Initial rotation around Z axis (degrees)')
 
-    parser.add_argument('--icp_threshold', type=float, default=0.003, help='ICP max correspondence distance')
+    parser.add_argument('--icp_threshold', type=float, default=0.03, help='ICP max correspondence distance')
     parser.add_argument('--skip_ransac', action='store_true', help='Skip RANSAC and go straight to ICP')
     parser.add_argument('--visualize', action='store_true', help='Enable intermediate visualizations')
     args = parser.parse_args()
