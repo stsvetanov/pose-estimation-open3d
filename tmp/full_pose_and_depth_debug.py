@@ -70,7 +70,7 @@ while True:
     # === Show extracted point cloud ===
     o3d.visualization.draw_geometries([scene_pcd], window_name="Scene Point Cloud")
 
-    output_dir = "icp_data"
+    output_dir = "../icp_data"
     os.makedirs(output_dir, exist_ok=True)
     scene_ply_path = os.path.join(output_dir, "realsense_scene_3.ply")
     o3d.io.write_point_cloud(scene_ply_path, scene_pcd)
