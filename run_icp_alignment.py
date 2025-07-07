@@ -72,7 +72,7 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
                 o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
                 o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
             ],
-            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(500000, 1000)
+            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(800000, 1500)
         )
 
         print("RANSAC transformation:\n", result_ransac.transformation)

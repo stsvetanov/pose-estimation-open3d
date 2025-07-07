@@ -55,6 +55,10 @@ def capture_filtered(pipeline, frame_count, filters):
     depth_frame = None
     color_frame = None
 
+    # print("[INFO] Warming up sensor...")
+    # for _ in range(30):
+    #     pipeline.wait_for_frames()
+
     for _ in range(frame_count):
         frames = pipeline.wait_for_frames()
         depth = frames.get_depth_frame()
@@ -90,6 +94,7 @@ def save_to_ply(depth_image, color_image, output_file):
 
     o3d.io.write_point_cloud(output_file, pcd)
     print(f"[INFO] Point cloud saved to: {output_file}")
+    o3d.visualization.draw_geometries([pcd], window_name="Point Cloud")
 
 
 def main():
