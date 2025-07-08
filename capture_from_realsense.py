@@ -80,7 +80,9 @@ def main():
         depth_image = np.asanyarray(depth_frame.get_data())
 
         if args.cut:
-            mask = generate_dummy_mask(color_image.shape, radius=100)
+            # mask = generate_dummy_mask(color_image.shape, radius=100)
+            mask = cv2.imread("output2/rgb_000.png_0.jpg", cv2.IMREAD_GRAYSCALE)
+            mask = cv2.resize(mask, (1920, 1080))
             overlay = cv2.addWeighted(color_image, 0.7, cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR), 0.3, 0)
             cv2.imshow("RGB + Mask", overlay)
         else:
@@ -93,9 +95,14 @@ def main():
             print(f"[INFO] Saving data set #{counter}")
 
             # Save RGB image
-            img_path = f"output/rgb_{counter:03d}.png"
+            img_path = f"output2/rgb_{counter:03d}.png"
             cv2.imwrite(img_path, color_image)
             print(f"[INFO] Saved image: {img_path}")
+
+            img_path = f"output2/depth_{counter:03d}.png"
+            cv2.imwrite(img_path, depth_image)
+            print(f"[INFO] Saved image: {img_path}")
+
 
             # Save full scene
             if args.save_full:
