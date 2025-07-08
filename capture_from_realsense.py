@@ -119,7 +119,7 @@ def main():
                                     [0, -1, 0, 0],
                                     [0, 0, -1, 0],
                                     [0, 0, 0, 1]])
-                full_path = f"output/scene_full_{counter:03d}.ply"
+                full_path = f"output2/scene_full_{counter:03d}.ply"
                 o3d.io.write_point_cloud(full_path, full_pcd)
                 print(f"[INFO] Full scene saved to {full_path}")
 
@@ -133,7 +133,7 @@ def main():
                                [0, -1, 0, 0],
                                [0, 0, -1, 0],
                                [0, 0, 0, 1]])
-                cut_path = f"output/scene_cut_{counter:03d}.ply"
+                cut_path = f"output2/scene_cut_{counter:03d}.ply"
                 o3d.io.write_point_cloud(cut_path, pcd)
                 print(f"[INFO] Cut scene saved to {cut_path}")
 
