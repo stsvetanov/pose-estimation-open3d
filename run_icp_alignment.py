@@ -7,6 +7,12 @@ def draw_registration_result(scene, model, transformation=None, window_name="Reg
     if transformation is not None:
         model = copy.deepcopy(model)
         model.transform(transformation)
+
+    # # Add coordinate frame to show model orientation (default size = 1.0)
+    # # You can adjust size and origin if needed
+    # axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1, origin=[0, 0, 0])
+    # axis.transform(transformation)  # Apply the model's pose
+
     o3d.visualization.draw_geometries([scene, model], window_name=window_name)
 
 def compute_fpfh(pcd, voxel_size):
@@ -48,10 +54,10 @@ def run_alignment(model_path, scene_path, voxel_size, init_translation, init_rot
     model_down = model.voxel_down_sample(voxel_size)
     scene_down = scene.voxel_down_sample(voxel_size)
 
-    if visualize:
-        model_down.paint_uniform_color([1, 0, 0])  # red
-        scene_down.paint_uniform_color([0, 0, 1])  # blue
-        draw_registration_result(scene_down, model_down, window_name="Downsampled Clouds")
+    # if visualize:
+    #     model_down.paint_uniform_color([1, 0, 0])  # red
+    #     scene_down.paint_uniform_color([0, 0, 1])  # blue
+    #     draw_registration_result(scene_down, model_down, window_name="Downsampled Clouds")
 
     if skip_ransac:
         print("[INFO] Skipping RANSAC. Using identity matrix for initial alignment.")
