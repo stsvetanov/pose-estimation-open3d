@@ -57,7 +57,7 @@ def manual_grasp_point_select(mesh_path, visualize_all = False, resampling = 500
 
 if __name__ == "__main__":
 
-    model_path = r"C:\Work\2025_workstuff\Research\poseEstimate_svetanov\pose-estimation-open3d\data\3D-models\Plate1.stl"
+    model_path = "..\pose-estimation-open3d\data\3D-models\Plate1.stl"
 
     grasp_point, grasp_normal = manual_grasp_point_select(model_path)
 
